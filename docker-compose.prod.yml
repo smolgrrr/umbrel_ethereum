@@ -1,0 +1,35 @@
+version: "3.7"
+
+services:
+  ethereumd:
+    image: ethereum/client-go
+    volumes:
+      - ${PWD}/ethereum:/data/.ethereum
+    restart: on-failure
+    stop_grace_period: 15m30s
+    ports:
+      - "8545:8545"
+      # - "8333:8333" # "$ethereum_P2P_PORT:$ethereum_P2P_PORT"
+  server:
+    build: .
+    depends_on: [ethereumd]
+    command: ["npm", "start"]
+    restart: on-failure
+    ports:
+      - "3005:3005"
+    environment:
+      PORT: "3005"
+      ethereum_HOST: "ethereumd"
+      RPC_PORT: $ethereum_RPC_PORT
+      RPC_USER: $ethereum_RPC_USER
+      RPC_PASSWORD: $ethereum_RPC_PASS
+      ethereum_RPC_HIDDEN_SERVICE: "/var/lib/tor/ethereum-rpc/hostname"
+      ethereum_P2P_HIDDEN_SERVICE: "/var/lib/tor/ethereum-p2p/hostname"
+
+networks:
+  default:
+    name: umbrel_main_network
+    ipam:
+      driver: default
+      config:
+        - subnet: "$NETWORK_IP/24"
